@@ -15,9 +15,8 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id, name, label, parentid, is_show, orderby, is_leaf
+        id , name, label, parentid, is_show, orderby, is_leaf
     </sql>
-
     <select id="selectTreeNodes" resultType="com.xuecheng.content.model.dto.CourseCategoryTreeDto" parameterType="string">
         with recursive t1 as (
             select * from  course_category p where  id= #{id}
