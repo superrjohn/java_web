@@ -1,0 +1,15 @@
+package com.xuecheng;
+
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+//啟動類會運行這個包和其子包,因為本項目都是xuecheng命名,所以會掃瞄到其他模塊的包
+
+
+@SpringBootApplication
+public class ContentApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(ContentApplication.class, args);
+    }
+} 
