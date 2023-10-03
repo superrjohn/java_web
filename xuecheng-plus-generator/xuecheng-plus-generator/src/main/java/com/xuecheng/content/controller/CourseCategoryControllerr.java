@@ -18,7 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Slf4j
 @RestController
 @RequestMapping("courseCategory")
-public class CourseCategoryController {
+public class CourseCategoryControllerr {
 
     @Autowired
     private CourseCategoryService  courseCategoryService;

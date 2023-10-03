@@ -1,5 +1,5 @@
 ###查詢課程信息
-POST {{content_host}}/content/course/list?pageNp=1&pageSize=2
+POST {{gateway_host}}/content/course/list?pageNp=1&pageSize=2
 Content-Type: application/json
 
 {
@@ -34,4 +34,12 @@ Content-Type: application/json
 
 ### 根据课程id查询课程信息
 GET {{content_host}}/content/course/40
+Content-Type: application/json
+
+### 查询某个课程的课程计划
+GET {{content_host}}/content/teachplan/117/tree-nodes
+Content-Type: application/json
+
+### 删除课程计划
+DELETE {{content_host}}/content/teachplan/291
 Content-Type: application/json

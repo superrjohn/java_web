@@ -4,17 +4,14 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
-import com.xuecheng.content.mapper.CourseBaseMapper;
-import com.xuecheng.content.mapper.CourseCategoryMapper;
-import com.xuecheng.content.mapper.CourseMarketMapper;
+import com.xuecheng.content.mapper.*;
 import com.xuecheng.content.model.dto.AddCourseDto;
 import com.xuecheng.content.model.dto.CourseBaseInfoDto;
 import com.xuecheng.content.model.dto.EditCourseDto;
 import com.xuecheng.content.model.dto.QueryCourseParamsDto;
-import com.xuecheng.content.model.po.CourseBase;
-import com.xuecheng.content.model.po.CourseCategory;
-import com.xuecheng.content.model.po.CourseMarket;
+import com.xuecheng.content.model.po.*;
 import com.xuecheng.content.service.CourseBaseInfoService;
+import com.xuecheng.content.service.CourseTeacherService;
 import com.xuecheng.exception.XueChengPlusException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
@@ -39,6 +36,13 @@ public class CourseBaseInfoServiceImpl implements CourseBaseInfoService {
 
     @Autowired
     CourseCategoryMapper courseCategoryMapper;
+
+    @Autowired
+    CourseTeacherMapper courseTeacherMapper;
+
+    @Autowired
+    TeachplanMapper teachplanMapper;
+
 
     @Override
     public PageResult<CourseBase> queryCourseBaseList(PageParams pageParams, QueryCourseParamsDto courseParamsDto) {
@@ -141,13 +145,39 @@ public class CourseBaseInfoServiceImpl implements CourseBaseInfoService {
         courseBase.setChangeDate(LocalDateTime.now());
         //更新數據庫
         int i = courseBaseMapper.updateById(courseBase);
-        if (i <= 0){
+        if (i <= 0) {
             XueChengPlusException.cast("修改課程失敗");
         }
+        //更新營銷信息
+        CourseMarket courseMarket = new CourseMarket();
+        BeanUtils.copyProperties(editCourseDto, courseMarket);
+        saveCourseMarket(courseMarket);
         //查詢課程信息
         CourseBaseInfoDto courseBaseInfo = getCourseBaseInfo(courseId);
         return courseBaseInfo;
     }
+
+    //删除课程接口
+    @Transactional
+    @Override
+    public void delectCourse(Long companyId, Long courseId) {
+        CourseBase courseBase = courseBaseMapper.selectById(courseId);
+        if (!companyId.equals(courseBase.getCompanyId()))
+            XueChengPlusException.cast("只允许删除本机构的课程");
+        // 删除课程教师信息
+        LambdaQueryWrapper<CourseTeacher> teacherLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        teacherLambdaQueryWrapper.eq(CourseTeacher::getCourseId, courseId);
+        courseTeacherMapper.delete(teacherLambdaQueryWrapper);
+        // 删除课程计划
+        LambdaQueryWrapper<Teachplan> teachplanLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        teachplanLambdaQueryWrapper.eq(Teachplan::getCourseId, courseId);
+        teachplanMapper.delete(teachplanLambdaQueryWrapper);
+        // 删除营销信息
+        courseMarketMapper.deleteById(courseId);
+        // 删除课程基本信息
+        courseBaseMapper.deleteById(courseId);
+    }
+
 
     //單獨寫一個方法保存營銷信息,邏輯:存在則更新,不存在則添加
     private int saveCourseMarket(CourseMarket courseMarketNew) {

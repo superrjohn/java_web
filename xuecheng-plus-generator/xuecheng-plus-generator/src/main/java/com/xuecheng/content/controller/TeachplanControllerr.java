@@ -18,7 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Slf4j
 @RestController
 @RequestMapping("teachplan")
-public class TeachplanController {
+public class TeachplanControllerr {
 
     @Autowired
     private TeachplanService  teachplanService;
