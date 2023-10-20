@@ -34,8 +34,7 @@ Content-Type: application/json
 
 ### 根据课程id查询课程信息
 GET {{content_host}}/content/course/40
-Content-Type: application/json
-
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsieHVlY2hlbmctcGx1cyJdLCJ1c2VyX25hbWUiOiJ6aGFuZ3NhbiIsInNjb3BlIjpbImFsbCJdLCJleHAiOjE2OTcwMzAyNjQsImF1dGhvcml0aWVzIjpbInAxIl0sImp0aSI6Ijc4ZDhkYzI0LWUwMzQtNGUxZi05MWZkLWYxZjMyMDBjYzE4YiIsImNsaWVudF9pZCI6IlhjV2ViQXBwIn0.TJ0O2cRJeeKlKqpLGjB0k5NJbPvL7HBXpQYkuVPzdCc
 ### 查询某个课程的课程计划
 GET {{content_host}}/content/teachplan/117/tree-nodes
 Content-Type: application/json
@@ -43,3 +42,9 @@ Content-Type: application/json
 ### 删除课程计划
 DELETE {{content_host}}/content/teachplan/291
 Content-Type: application/json
+
+
+### 用網關根据课程id查询课程信息
+GET {{gateway_host}}/content/course/40
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsieHVlY2hlbmctcGx1cyJdLCJ1c2VyX25hbWUiOiJ6aGFuZ3NhbiIsInNjb3BlIjpbImFsbCJdLCJleHAiOjE2OTcwNDU2MzksImF1dGhvcml0aWVzIjpbInAxIl0sImp0aSI6IjgyY2EwN2RkLTk1OGMtNGI1ZC1hZDA4LTc3OGVkNDc5NzRiNiIsImNsaWVudF9pZCI6IlhjV2ViQXBwIn0.eRu0SdAQRgAFOBZR3Zh7lNC35X_JwsXBbro7w5sxCy8
+### 查询某个课程的课程计划

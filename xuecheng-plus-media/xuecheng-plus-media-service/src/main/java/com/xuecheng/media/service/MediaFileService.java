@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -39,7 +40,7 @@ public interface MediaFileService {
      * @param localFilePath       文件磁盘路径
      * @return 文件信息
      */
-    public UploadFileResultDto uploadFile(Long companyId, UploadFileParamsDto uploadFileParamsDto, String localFilePath);
+    public UploadFileResultDto uploadFile(Long companyId, UploadFileParamsDto uploadFileParamsDto, String localFilePath,String objectName);
 
     /**
      * @param fileMd5 文件的md5
@@ -82,4 +83,27 @@ public interface MediaFileService {
      * @date 2022/9/13 15:56
      */
     public RestResponse mergechunks(Long companyId,String fileMd5,int chunkTotal,UploadFileParamsDto uploadFileParamsDto);
+    /**
+     * 从minio下载文件
+     *
+     * @param bucket     桶
+     * @param objectName 对象名称
+     * @return 下载后的文件
+     */
+    public File downloadFileFromMinIO(String bucket, String objectName) ;
+
+    /**
+     * @param localFilePath 文件地址
+     * @param bucket        桶
+     * @param objectName    对象名称
+     * @return void
+     * @description 将文件写入minIO
+     * @author Mr.M
+     * @date 2022/10/12 21:22
+     */
+
+    //上傳文件的參數信息
+    public boolean addMediaFilesToMinIO(String localFilePath, String mimeType, String bucket, String objectName);
+
+    MediaFiles getFileById(String mediaId);
 }

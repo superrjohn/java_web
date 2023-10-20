@@ -5,6 +5,7 @@ import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
 import com.xuecheng.content.model.dto.*;
 import com.xuecheng.content.model.po.CourseBase;
+import com.xuecheng.content.model.po.TeachplanMedia;
 
 import java.util.List;
 
@@ -26,9 +27,9 @@ public interface TeachplanService {
     public List<TeachplanDto> findTeachplanTree(Long courseId);
 
     /**
-     * @description 只在课程计划
-     * @param teachplanDto  课程计划信息
+     * @param teachplanDto 课程计划信息
      * @return void
+     * @description 只在课程计划
      * @author Mr.M
      * @date 2022/9/9 13:39
      */
@@ -37,4 +38,14 @@ public interface TeachplanService {
     void removeTeachPlan(Long teachPlanId);
 
     void moveTeachPlan(Long teachPlanId, String moveType);
+    /**
+     * @description 教学计划绑定媒资
+     * @param bindTeachplanMediaDto
+     * @return com.xuecheng.content.model.po.TeachplanMedia
+     * @author Mr.M
+     * @date 2022/9/14 22:20
+     */
+    public TeachplanMedia associationMedia(BindTeachplanMediaDto bindTeachplanMediaDto);
+
+
 }

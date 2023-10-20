@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xuecheng.content.mapper.CourseBaseMapper;
 import com.xuecheng.content.mapper.TeachplanMapper;
 import com.xuecheng.content.mapper.TeachplanMediaMapper;
+import com.xuecheng.content.model.dto.BindTeachplanMediaDto;
 import com.xuecheng.content.model.dto.SaveTeachplanDto;
 import com.xuecheng.content.model.dto.TeachplanDto;
 import com.xuecheng.content.model.po.CourseBase;
@@ -126,25 +127,25 @@ public class TeachplanServiceImpl implements TeachplanService {
     }
 
     @Override
-    public void moveTeachPlan(Long teachPlanId,String moveType) {
+    public void moveTeachPlan(Long teachPlanId, String moveType) {
 
         //课程计划
         Teachplan teachplan = teachplanMapper.selectById(teachPlanId);
 
         //查询同级别的课程计划
         LambdaQueryWrapper<Teachplan> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Teachplan::getCourseId,teachplan.getCourseId()).eq(Teachplan::getParentid,teachplan.getParentid());
+        queryWrapper.eq(Teachplan::getCourseId, teachplan.getCourseId()).eq(Teachplan::getParentid, teachplan.getParentid());
 
         List<Teachplan> teachplans = teachplanMapper.selectList(queryWrapper);
 
         //如果同级别只有一个课程计划，什么也不处理
-        if(teachplans.size()<=1){
+        if (teachplans.size() <= 1) {
             return;
         }
 
 
         //根据移动类型进行排序
-        if(moveType.equals("moveup")){//上移，找到比当前计划小的，交换位置
+        if (moveType.equals("moveup")) {//上移，找到比当前计划小的，交换位置
             //降序，先找到当前计划，下一个就是要和他交换位置的计划
             Collections.sort(teachplans, new Comparator<Teachplan>() {
                 @Override
@@ -152,7 +153,7 @@ public class TeachplanServiceImpl implements TeachplanService {
                     return o2.getOrderby() - o1.getOrderby();
                 }
             });
-        }else{
+        } else {
             //升序
             Collections.sort(teachplans, new Comparator<Teachplan>() {
                 @Override
@@ -163,12 +164,12 @@ public class TeachplanServiceImpl implements TeachplanService {
         }
 
         //找到当前计划
-        Teachplan one =null;
-        Teachplan two =null;
+        Teachplan one = null;
+        Teachplan two = null;
         Iterator<Teachplan> iterator = teachplans.iterator();
-        while (iterator.hasNext()){
+        while (iterator.hasNext()) {
             Teachplan next = iterator.next();
-            if(next.getId().equals(teachplan.getId())){
+            if (next.getId().equals(teachplan.getId())) {
                 one = next;
                 try {
                     Teachplan next1 = iterator.next();
@@ -179,14 +180,36 @@ public class TeachplanServiceImpl implements TeachplanService {
             }
         }
 
-        swapTeachplan(one,two);
+        swapTeachplan(one, two);
 
     }
 
+    @Transactional
+    @Override
+    public TeachplanMedia associationMedia(BindTeachplanMediaDto bindTeachplanMediaDto) {
+        //教学计划id
+        Long teachplanId = bindTeachplanMediaDto.getTeachplanId();
+        Teachplan teachplan = teachplanMapper.selectById(teachplanId);
+        if(teachplan==null){
+            XueChengPlusException.cast("教学计划不存在");
+        }
+
+        //先刪除原有記錄,根據課程計劃id刪除它所綁定的媒資,delete方法要newLambda查詢,泛型指定要查的表,eq是參數1要和參數2相同
+        int delete = teachplanMediaMapper.delete(new LambdaQueryWrapper<TeachplanMedia>().eq(TeachplanMedia::getTeachplanId,
+                bindTeachplanMediaDto.getTeachplanId()));
+        //再添加新記錄
+        TeachplanMedia teachplanMedia = new TeachplanMedia();
+        BeanUtils.copyProperties(bindTeachplanMediaDto,teachplanMedia);
+        teachplanMedia.setCourseId(teachplan.getCourseId());
+        teachplanMedia.setMediaFilename(bindTeachplanMediaDto.getFileName());
+        teachplanMediaMapper.insert(teachplanMedia);
+        return null;
+    }
+
     //交换位置
-    private void swapTeachplan(Teachplan left,Teachplan right){
-        if(left==null || right==null){
-            return ;
+    private void swapTeachplan(Teachplan left, Teachplan right) {
+        if (left == null || right == null) {
+            return;
         }
         Integer orderby_left = left.getOrderby();
         Integer orderby_right = right.getOrderby();
@@ -194,6 +217,6 @@ public class TeachplanServiceImpl implements TeachplanService {
         right.setOrderby(orderby_left);
         teachplanMapper.updateById(left);
         teachplanMapper.updateById(right);
-        log.debug("课程计划交换位置，left:{},right:{}",left.getId(),right.getId());
+        log.debug("课程计划交换位置，left:{},right:{}", left.getId(), right.getId());
     }
 }

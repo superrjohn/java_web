@@ -10,10 +10,12 @@ import com.xuecheng.base.model.PageResult;
 import com.xuecheng.base.model.RestResponse;
 import com.xuecheng.exception.XueChengPlusException;
 import com.xuecheng.media.mapper.MediaFilesMapper;
+import com.xuecheng.media.mapper.MediaProcessMapper;
 import com.xuecheng.media.model.dto.QueryMediaParamsDto;
 import com.xuecheng.media.model.dto.UploadFileParamsDto;
 import com.xuecheng.media.model.dto.UploadFileResultDto;
 import com.xuecheng.media.model.po.MediaFiles;
+import com.xuecheng.media.model.po.MediaProcess;
 import com.xuecheng.media.service.MediaFileService;
 import io.minio.*;
 import io.minio.errors.*;
@@ -55,6 +57,9 @@ public class MediaFileServiceImpl implements MediaFileService {
 
     @Autowired
     MinioClient minioClient;
+
+    @Autowired
+    MediaProcessMapper mediaProcessMapper;
     //nacos中配置的文件名
     @Value("${minio.bucket.files}")
     private String bucket_mediafiles;
@@ -127,6 +132,13 @@ public class MediaFileServiceImpl implements MediaFileService {
         return false;
     }
 
+    @Override
+    public MediaFiles getFileById(String mediaId) {
+
+        MediaFiles mediaFiles = mediaFilesMapper.selectById(mediaId);
+        return mediaFiles;
+    }
+
     //获取文件默认存储目录路径 年/月/日
     private String getDefaultFolderPath() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -183,14 +195,44 @@ public class MediaFileServiceImpl implements MediaFileService {
                 return null;
             }
             log.debug("保存文件信息到数据库成功,{}", mediaFiles.toString());
-
         }
+        //記錄待處理任務
+        addWaitingTask(mediaFiles);
+
+        //向mediaProcess插入記錄
         return mediaFiles;
 
     }
 
+    /**
+     * 添加待处理任务
+     *
+     * @param mediaFiles 媒资文件信息
+     */
+    private void addWaitingTask(MediaFiles mediaFiles) {
+        //文件名稱
+        String filename = mediaFiles.getFilename();
+        //文件擴展名
+        String extension = filename.substring(filename.lastIndexOf("."));
+        //通過mineType判斷如果是webm/avi視頻寫入待處理任務
+        String mimeType = getMimeType(extension);
+        if (mimeType.equals("video/webm") || mimeType.equals("video/x-msvideo")) { //如果是webm和avi寫入待處理
+            MediaProcess mediaProcess = new MediaProcess();
+            //將mediaFiles資料copy到mediaProcess
+            BeanUtils.copyProperties(mediaFiles, mediaProcess);
+            //狀態
+            mediaProcess.setStatus("1");
+            mediaProcess.setCreateDate(LocalDateTime.now());
+            mediaProcess.setFailCount(0);//失敗次數默認為0
+            mediaProcess.setUrl(null); //最後在網站播放的url
+            mediaProcessMapper.insert(mediaProcess);
+        }
+
+    }
+
+
     @Override                             //機構ID,上傳文件信息DTO,文件本地路徑
-    public UploadFileResultDto uploadFile(Long companyId, UploadFileParamsDto uploadFileParamsDto, String localFilePath) {
+    public UploadFileResultDto uploadFile(Long companyId, UploadFileParamsDto uploadFileParamsDto, String localFilePath, String objectName) {
         //得到文件名
         String filename = uploadFileParamsDto.getFilename();
         //得到擴展名,字串切割,只要.號後的字串
@@ -201,7 +243,9 @@ public class MediaFileServiceImpl implements MediaFileService {
         String defaultFolderPath = getDefaultFolderPath();
         //獲得md5值,並拼接出對象名
         String fileMd5 = getFileMd5(new File(localFilePath));
-        String objectName = defaultFolderPath + fileMd5 + extension;
+        if (StringUtils.isEmpty(objectName)) {
+            objectName = defaultFolderPath + fileMd5 + extension;
+        }
         //上傳文件
         boolean result = addMediaFilesToMinIO(localFilePath, mimeType, bucket_mediafiles, objectName);
         if (!result) {
@@ -356,7 +400,7 @@ public class MediaFileServiceImpl implements MediaFileService {
         try {
             List<DeleteObject> deleteObjects = Stream.iterate(0, i -> ++i)
                     .limit(chunkTotal)
-                    .map(i -> new DeleteObject(chunkFileFolderPath+i)   )
+                    .map(i -> new DeleteObject(chunkFileFolderPath + i))
                     .collect(Collectors.toList());
 
             RemoveObjectsArgs removeObjectsArgs = RemoveObjectsArgs.builder().bucket("video").objects(deleteObjects).build();

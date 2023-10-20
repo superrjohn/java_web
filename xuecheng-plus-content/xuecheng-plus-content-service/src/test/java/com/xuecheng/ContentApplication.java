@@ -3,10 +3,11 @@ package com.xuecheng;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 
 //啟動類會運行這個包和其子包,因為本項目都是xuecheng命名,所以會掃瞄到其他模塊的包
 
-
+@EnableFeignClients(basePackages={"com.xuecheng.content.feignclient"})
 @SpringBootApplication
 public class ContentApplication {
     public static void main(String[] args) {
